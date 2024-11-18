@@ -105,4 +105,24 @@ echo "优化配置已写入 $SYSCTL_CONF"
 echo "应用优化配置..."
 sysctl -p $SYSCTL_CONF
 
-echo "优化完成！"
+# 调整网络接口 MTU
+echo "调整网络接口 MTU..."
+DEFAULT_IFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
+if [ -n "$DEFAULT_IFACE" ]; then
+    echo "检测到默认网络接口: $DEFAULT_IFACE"
+    ifconfig "$DEFAULT_IFACE" mtu 1400
+    echo "MTU 已调整为 1400"
+else
+    echo "未能检测到默认网络接口，请手动设置 MTU！"
+fi
+
+# 检查 BBR 是否成功启用
+echo "检查 BBR 是否成功启用..."
+BBR_STATUS=$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')
+if [ "$BBR_STATUS" = "bbr" ]; then
+    echo "BBR 已成功启用！"
+else
+    echo "BBR 启用失败，请检查配置！"
+fi
+
+echo "网络优化完成！请重启网络或服务器以确保设置生效。"
