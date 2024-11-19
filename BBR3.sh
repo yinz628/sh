@@ -34,6 +34,11 @@ sed -i '/^net\.core\.wmem_max/d' $sysctl_config_file
 echo "net.core.rmem_max = 16777216" >> $sysctl_config_file
 echo "net.core.wmem_max = 16777216" >> $sysctl_config_file
 
+# 启用 TCP Fast Open
+echo "启用 TCP Fast Open..."
+echo "net.ipv4.tcp_fastopen=3" >> /etc/sysctl.conf
+
+
 # 检查是否有IPv6地址
 if ip -6 addr show | grep -q 'inet6'; then
   # 启用IPv6转发
