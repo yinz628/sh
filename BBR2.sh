@@ -1,128 +1,161 @@
-#!/bin/bash
+#!/bin/sh
 
-# 检查是否为 root 用户
-if [ "$(id -u)" -ne 0 ]; then
-    echo "请以 root 用户权限运行此脚本！"
-    exit 1
+# 调整系统内核参数以优化网络性能
+# 使用sed命令替换已有配置或添加新配置
+sysctl_config_file="/etc/sysctl.conf"
+
+# 减少TCP连接的延迟
+sed -i '/^net\.ipv4\.tcp_fin_timeout/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_tw_reuse/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_tw_recycle/d' $sysctl_config_file
+echo "net.ipv4.tcp_fin_timeout = 15" >> $sysctl_config_file
+echo "net.ipv4.tcp_tw_reuse = 1" >> $sysctl_config_file
+echo "net.ipv4.tcp_tw_recycle = 1" >> $sysctl_config_file
+
+# 增加TCP缓冲区大小
+sed -i '/^net\.ipv4\.tcp_rmem/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_wmem/d' $sysctl_config_file
+echo "net.ipv4.tcp_rmem = 4096 87380 33554432" >> $sysctl_config_file
+echo "net.ipv4.tcp_wmem = 4096 65536 33554432" >> $sysctl_config_file
+
+# 启用窗口扩大系数
+sed -i '/^net\.ipv4\.tcp_window_scaling/d' $sysctl_config_file
+echo "net.ipv4.tcp_window_scaling = 1" >> $sysctl_config_file
+
+# TCP拥塞控制算法 (BBR)
+sed -i '/^net\.core\.default_qdisc/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_congestion_control/d' $sysctl_config_file
+echo "net.core.default_qdisc = fq" >> $sysctl_config_file
+echo "net.ipv4.tcp_congestion_control = bbr" >> $sysctl_config_file
+
+# 调整最大接收和发送缓冲区大小
+sed -i '/^net\.core\.rmem_max/d' $sysctl_config_file
+sed -i '/^net\.core\.wmem_max/d' $sysctl_config_file
+echo "net.core.rmem_max = 33554432" >> $sysctl_config_file
+echo "net.core.wmem_max = 33554432" >> $sysctl_config_file
+
+# 启用TCP Fast Open
+sed -i '/^net\.ipv4\.tcp_fastopen/d' $sysctl_config_file
+echo "net.ipv4.tcp_fastopen = 3" >> $sysctl_config_file
+
+# 添加其他IPv4参数
+sed -i '/^net\.ipv4\.tcp_no_metrics_save/d' $sysctl_config_file
+echo "net.ipv4.tcp_no_metrics_save = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_ecn/d' $sysctl_config_file
+echo "net.ipv4.tcp_ecn = 0" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_frto/d' $sysctl_config_file
+echo "net.ipv4.tcp_frto = 0" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_mtu_probing/d' $sysctl_config_file
+echo "net.ipv4.tcp_mtu_probing = 0" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_rfc1337/d' $sysctl_config_file
+echo "net.ipv4.tcp_rfc1337 = 0" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_sack/d' $sysctl_config_file
+echo "net.ipv4.tcp_sack = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_fack/d' $sysctl_config_file
+echo "net.ipv4.tcp_fack = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_adv_win_scale/d' $sysctl_config_file
+echo "net.ipv4.tcp_adv_win_scale = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_moderate_rcvbuf/d' $sysctl_config_file
+echo "net.ipv4.tcp_moderate_rcvbuf = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.udp_rmem_min/d' $sysctl_config_file
+echo "net.ipv4.udp_rmem_min = 8192" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.udp_wmem_min/d' $sysctl_config_file
+echo "net.ipv4.udp_wmem_min = 8192" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.ip_forward/d' $sysctl_config_file
+echo "net.ipv4.ip_forward = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.conf\.all\.route_localnet/d' $sysctl_config_file
+echo "net.ipv4.conf.all.route_localnet = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.conf\.all\.forwarding/d' $sysctl_config_file
+echo "net.ipv4.conf.all.forwarding = 1" >> $sysctl_config_file
+sed -i '/^net\.ipv4\.conf\.default\.forwarding/d' $sysctl_config_file
+echo "net.ipv4.conf.default.forwarding = 1" >> $sysctl_config_file
+
+# 检查是否有IPv6地址
+if ip -6 addr show | grep -q 'inet6'; then
+  # 启用IPv6转发
+  sed -i '/^net\.ipv6\.conf\.all\.forwarding/d' $sysctl_config_file
+  echo "net.ipv6.conf.all.forwarding = 1" >> $sysctl_config_file
+  sed -i '/^net\.ipv6\.conf\.default\.forwarding/d' $sysctl_config_file
+  echo "net.ipv6.conf.default.forwarding = 1" >> $sysctl_config_file
+
+  # 增加IPv6 TCP缓冲区大小
+  sed -i '/^net\.ipv6\.tcp_rmem/d' $sysctl_config_file
+  sed -i '/^net\.ipv6\.tcp_wmem/d' $sysctl_config_file
+  echo "net.ipv6.tcp_rmem = 4096 87380 33554432" >> $sysctl_config_file
+  echo "net.ipv6.tcp_wmem = 4096 65536 33554432" >> $sysctl_config_file
+
+  # 启用IPv6窗口扩大系数
+  sed -i '/^net\.ipv6\.tcp_window_scaling/d' $sysctl_config_file
+  echo "net.ipv6.tcp_window_scaling = 1" >> $sysctl_config_file
+
+  # 启用IPv6 TCP Fast Open
+  sed -i '/^net\.ipv6\.tcp_fastopen/d' $sysctl_config_file
+  echo "net.ipv6.tcp_fastopen = 3" >> $sysctl_config_file
 fi
 
-# 优化配置
-SYSCTL_CONF="/etc/sysctl.d/99-optimized.conf"
+# 使配置生效
+sysctl -p
 
-echo "创建优化配置文件: $SYSCTL_CONF"
+# 显示所有修改后的内核参数结果
+echo "修改后的系统内核参数："
+sysctl net.ipv4.tcp_fin_timeout
+sysctl net.ipv4.tcp_tw_reuse
+sysctl net.ipv4.tcp_tw_recycle
+sysctl net.ipv4.tcp_rmem
+sysctl net.ipv4.tcp_wmem
+sysctl net.ipv4.tcp_window_scaling
+sysctl net.core.default_qdisc
+sysctl net.ipv4.tcp_congestion_control
+sysctl net.core.rmem_max
+sysctl net.core.wmem_max
+sysctl net.ipv4.tcp_fastopen
+sysctl net.ipv4.tcp_no_metrics_save
+sysctl net.ipv4.tcp_ecn
+sysctl net.ipv4.tcp_frto
+sysctl net.ipv4.tcp_mtu_probing
+sysctl net.ipv4.tcp_rfc1337
+sysctl net.ipv4.tcp_sack
+sysctl net.ipv4.tcp_fack
+sysctl net.ipv4.tcp_adv_win_scale
+sysctl net.ipv4.tcp_moderate_rcvbuf
+sysctl net.ipv4.udp_rmem_min
+sysctl net.ipv4.udp_wmem_min
+sysctl net.ipv4.ip_forward
+sysctl net.ipv4.conf.all.route_localnet
+sysctl net.ipv4.conf.all.forwarding
+sysctl net.ipv4.conf.default.forwarding
 
-cat > $SYSCTL_CONF <<EOF
-# TCP 和网络相关优化
-net.ipv4.tcp_congestion_control = bbr
-net.core.default_qdisc = fq
-net.core.rmem_max = 67108864
-net.core.wmem_max = 67108864
-net.core.rmem_default = 67108864
-net.core.wmem_default = 67108864
-net.core.optmem_max = 65536
-net.core.somaxconn = 1000000
-net.core.netdev_max_backlog = 100000
-net.core.netdev_budget = 50000
-net.core.netdev_budget_usecs = 5000
-net.ipv4.tcp_rmem = 4096 87380 67108864
-net.ipv4.tcp_wmem = 4096 65536 67108864
-net.ipv4.tcp_retries2 = 5
-net.ipv4.tcp_keepalive_time = 600
-net.ipv4.tcp_keepalive_intvl = 15
-net.ipv4.tcp_keepalive_probes = 2
-net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_fin_timeout = 15
-net.ipv4.tcp_tw_reuse = 0
-net.ipv4.tcp_max_tw_buckets = 5000
-net.ipv4.tcp_syn_retries = 1
-net.ipv4.tcp_synack_retries = 1
-net.ipv4.tcp_max_syn_backlog = 819200
-net.ipv4.tcp_timestamps = 1
-net.ipv4.tcp_no_metrics_save = 0
-net.ipv4.tcp_mtu_probing = 1
-net.ipv4.tcp_autocorking = 0
-net.ipv4.tcp_slow_start_after_idle = 0
-net.ipv4.tcp_notsent_lowat = 16384
-net.ipv4.tcp_ecn = 1
-net.ipv4.tcp_ecn_fallback = 1
-net.ipv4.ip_local_port_range = 1024 65535
+if ip -6 addr show | grep -q 'inet6'; then
+  sysctl net.ipv6.conf.all.forwarding
+  sysctl net.ipv6.conf.default.forwarding
+  sysctl net.ipv6.tcp_rmem
+  sysctl net.ipv6.tcp_wmem
+  sysctl net.ipv6.tcp_window_scaling
+  sysctl net.ipv6.tcp_fastopen
+fi
 
-# ICMP 配置
-net.ipv4.icmp_echo_ignore_all = 0
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.icmp_ignore_bogus_error_responses = 1
-
-# ARP 和路由优化
-net.ipv4.neigh.default.gc_thresh3 = 8192
-net.ipv4.neigh.default.gc_thresh2 = 4096
-net.ipv4.neigh.default.gc_thresh1 = 2048
-net.ipv6.neigh.default.gc_thresh3 = 8192
-net.ipv6.neigh.default.gc_thresh2 = 4096
-net.ipv6.neigh.default.gc_thresh1 = 2048
-net.ipv4.route.gc_timeout = 100
-
-# 禁用不必要的功能
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.conf.default.accept_redirects = 0
-net.ipv4.conf.all.secure_redirects = 0
-net.ipv4.conf.default.secure_redirects = 0
-net.ipv4.conf.all.send_redirects = 0
-net.ipv4.conf.default.send_redirects = 0
-net.ipv4.conf.default.rp_filter = 0
-net.ipv4.conf.all.rp_filter = 0
-
-# IPv6 配置
-net.ipv6.conf.all.disable_ipv6 = 0
-net.ipv6.conf.default.disable_ipv6 = 0
-net.ipv6.conf.lo.disable_ipv6 = 0
-net.ipv6.conf.all.accept_ra = 2
-net.ipv6.conf.default.accept_ra = 2
-net.ipv6.conf.all.forwarding = 1
-net.ipv6.conf.default.forwarding = 1
-net.ipv6.conf.lo.forwarding = 1
-
-# 文件句柄限制
-fs.file-max = 1000000
-fs.inotify.max_user_instances = 8192
-
-# 内存相关优化
-vm.swappiness = 1
-vm.overcommit_memory = 1
-
-# 进程限制
-kernel.pid_max = 4194304
-
-# 链接保护
-fs.protected_fifos = 1
-fs.protected_hardlinks = 1
-fs.protected_regular = 2
-fs.protected_symlinks = 1
-EOF
-
-echo "优化配置已写入 $SYSCTL_CONF"
-
-# 应用优化配置
-echo "应用优化配置..."
-sysctl -p $SYSCTL_CONF
-
-# 调整网络接口 MTU
-echo "调整网络接口 MTU..."
-DEFAULT_IFACE=$(ip route | grep default | awk '{print $5}' | head -n 1)
-if [ -n "$DEFAULT_IFACE" ]; then
-    echo "检测到默认网络接口: $DEFAULT_IFACE"
-    ifconfig "$DEFAULT_IFACE" mtu 1400
-    echo "MTU 已调整为 1400"
+# 调整网络接口的MTU值 (假设 eth0 是目标接口)
+MTU_VALUE=$(ping -c 4 -M do -s 1472 specificwebsite.com | grep -oP '(?<=bytes from).*' | awk '{print $4}' | cut -d'=' -f2)
+if [ -n "$MTU_VALUE" ]; then
+  ifconfig eth0 mtu $MTU_VALUE
+  echo "MTU 值已设置为 $MTU_VALUE"
 else
-    echo "未能检测到默认网络接口，请手动设置 MTU！"
+  MTU_VALUE=1500
+  ifconfig eth0 mtu $MTU_VALUE
+  echo "无法确定最佳 MTU 值，使用默认值 $MTU_VALUE"
 fi
 
-# 检查 BBR 是否成功启用
-echo "检查 BBR 是否成功启用..."
-BBR_STATUS=$(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}')
-if [ "$BBR_STATUS" = "bbr" ]; then
-    echo "BBR 已成功启用！"
-else
-    echo "BBR 启用失败，请检查配置！"
-fi
+# 确认BBR是否已启用
+AVAILABLE_CONGESTION_CONTROL=$(sysctl net.ipv4.tcp_available_congestion_control)
+CURRENT_CONGESTION_CONTROL=$(sysctl net.ipv4.tcp_congestion_control)
 
-echo "网络优化完成！请重启网络或服务器以确保设置生效。"
+echo "可用的拥塞控制算法: $AVAILABLE_CONGESTION_CONTROL"
+echo "当前拥塞控制算法: $CURRENT_CONGESTION_CONTROL"
+
+# 优化网络卡设置和防火墙规则（需要手动根据VPS具体情况配置）
+echo "请确保使用Virtio或其他高效虚拟网络适配器，并简化防火墙规则以减少延迟。"
+
+# 提示进一步优化的建议
+echo "建议进一步使用CDN或中继节点以减少延迟。"
+
+echo "网络优化脚本执行完毕。"
