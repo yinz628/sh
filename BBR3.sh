@@ -34,10 +34,9 @@ sed -i '/^net\.core\.wmem_max/d' $sysctl_config_file
 echo "net.core.rmem_max = 16777216" >> $sysctl_config_file
 echo "net.core.wmem_max = 16777216" >> $sysctl_config_file
 
-# 启用 TCP Fast Open
-echo "启用 TCP Fast Open..."
-echo "net.ipv4.tcp_fastopen=3" >> /etc/sysctl.conf
-
+# 启用TCP Fast Open
+sed -i '/^net\.ipv4\.tcp_fastopen/d' $sysctl_config_file
+echo "net.ipv4.tcp_fastopen = 3" >> $sysctl_config_file
 
 # 检查是否有IPv6地址
 if ip -6 addr show | grep -q 'inet6'; then
@@ -54,6 +53,10 @@ if ip -6 addr show | grep -q 'inet6'; then
   # 启用IPv6窗口扩大系数
   sed -i '/^net\.ipv6\.tcp_window_scaling/d' $sysctl_config_file
   echo "net.ipv6.tcp_window_scaling = 1" >> $sysctl_config_file
+
+  # 启用IPv6 TCP Fast Open
+  sed -i '/^net\.ipv6\.tcp_fastopen/d' $sysctl_config_file
+  echo "net.ipv6.tcp_fastopen = 3" >> $sysctl_config_file
 fi
 
 # 使配置生效
@@ -71,12 +74,14 @@ sysctl net.core.default_qdisc
 sysctl net.ipv4.tcp_congestion_control
 sysctl net.core.rmem_max
 sysctl net.core.wmem_max
+sysctl net.ipv4.tcp_fastopen
 
 if ip -6 addr show | grep -q 'inet6'; then
   sysctl net.ipv6.conf.all.forwarding
   sysctl net.ipv6.tcp_rmem
   sysctl net.ipv6.tcp_wmem
   sysctl net.ipv6.tcp_window_scaling
+  sysctl net.ipv6.tcp_fastopen
 fi
 
 # 调整网络接口的MTU值 (假设 eth0 是目标接口)
