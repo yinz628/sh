@@ -1,42 +1,54 @@
 #!/bin/sh
 
 # 调整系统内核参数以优化网络性能
-cat <<EOF >> /etc/sysctl.conf
+# 使用sed命令替换已有配置或添加新配置
+sysctl_config_file="/etc/sysctl.conf"
+
 # 减少TCP连接的延迟
-net.ipv4.tcp_fin_timeout = 15
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_tw_recycle = 1
+sed -i '/^net\.ipv4\.tcp_fin_timeout/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_tw_reuse/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_tw_recycle/d' $sysctl_config_file
+echo "net.ipv4.tcp_fin_timeout = 15" >> $sysctl_config_file
+echo "net.ipv4.tcp_tw_reuse = 1" >> $sysctl_config_file
+echo "net.ipv4.tcp_tw_recycle = 1" >> $sysctl_config_file
 
 # 增加TCP缓冲区大小
-net.ipv4.tcp_rmem = 4096 87380 6291456
-net.ipv4.tcp_wmem = 4096 16384 4194304
+sed -i '/^net\.ipv4\.tcp_rmem/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_wmem/d' $sysctl_config_file
+echo "net.ipv4.tcp_rmem = 4096 87380 6291456" >> $sysctl_config_file
+echo "net.ipv4.tcp_wmem = 4096 16384 4194304" >> $sysctl_config_file
 
 # 启用窗口扩大系数
-net.ipv4.tcp_window_scaling = 1
+sed -i '/^net\.ipv4\.tcp_window_scaling/d' $sysctl_config_file
+echo "net.ipv4.tcp_window_scaling = 1" >> $sysctl_config_file
 
 # TCP拥塞控制算法 (BBR)
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
+sed -i '/^net\.core\.default_qdisc/d' $sysctl_config_file
+sed -i '/^net\.ipv4\.tcp_congestion_control/d' $sysctl_config_file
+echo "net.core.default_qdisc = fq" >> $sysctl_config_file
+echo "net.ipv4.tcp_congestion_control = bbr" >> $sysctl_config_file
 
-# 调整最大接收缓冲区大小
-net.core.rmem_max = 16777216
-# 调整最大发送缓冲区大小
-net.core.wmem_max = 16777216
-EOF
+# 调整最大接收和发送缓冲区大小
+sed -i '/^net\.core\.rmem_max/d' $sysctl_config_file
+sed -i '/^net\.core\.wmem_max/d' $sysctl_config_file
+echo "net.core.rmem_max = 16777216" >> $sysctl_config_file
+echo "net.core.wmem_max = 16777216" >> $sysctl_config_file
 
 # 检查是否有IPv6地址
 if ip -6 addr show | grep -q 'inet6'; then
-  cat <<EOF >> /etc/sysctl.conf
-# 启用IPv6转发
-net.ipv6.conf.all.forwarding = 1
+  # 启用IPv6转发
+  sed -i '/^net\.ipv6\.conf\.all\.forwarding/d' $sysctl_config_file
+  echo "net.ipv6.conf.all.forwarding = 1" >> $sysctl_config_file
 
-# 增加IPv6 TCP缓冲区大小
-net.ipv6.tcp_rmem = 4096 87380 6291456
-net.ipv6.tcp_wmem = 4096 16384 4194304
+  # 增加IPv6 TCP缓冲区大小
+  sed -i '/^net\.ipv6\.tcp_rmem/d' $sysctl_config_file
+  sed -i '/^net\.ipv6\.tcp_wmem/d' $sysctl_config_file
+  echo "net.ipv6.tcp_rmem = 4096 87380 6291456" >> $sysctl_config_file
+  echo "net.ipv6.tcp_wmem = 4096 16384 4194304" >> $sysctl_config_file
 
-# 启用IPv6窗口扩大系数
-net.ipv6.tcp_window_scaling = 1
-EOF
+  # 启用IPv6窗口扩大系数
+  sed -i '/^net\.ipv6\.tcp_window_scaling/d' $sysctl_config_file
+  echo "net.ipv6.tcp_window_scaling = 1" >> $sysctl_config_file
 fi
 
 # 使配置生效
