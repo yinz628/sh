@@ -27,6 +27,19 @@ EOF
 # 使配置生效
 sysctl -p
 
+# 显示所有修改后的内核参数结果
+echo "修改后的系统内核参数："
+sysctl net.ipv4.tcp_fin_timeout
+sysctl net.ipv4.tcp_tw_reuse
+sysctl net.ipv4.tcp_tw_recycle
+sysctl net.ipv4.tcp_rmem
+sysctl net.ipv4.tcp_wmem
+sysctl net.ipv4.tcp_window_scaling
+sysctl net.core.default_qdisc
+sysctl net.ipv4.tcp_congestion_control
+sysctl net.core.rmem_max
+sysctl net.core.wmem_max
+
 # 调整网络接口的MTU值 (假设 eth0 是目标接口)
 MTU_VALUE=$(ping -c 4 -M do -s 1472 specificwebsite.com | grep -oP '(?<=bytes from).*' | awk '{print $4}' | cut -d'=' -f2)
 if [ -n "$MTU_VALUE" ]; then
