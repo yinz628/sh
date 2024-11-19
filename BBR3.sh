@@ -60,7 +60,9 @@ if [ -n "$MTU_VALUE" ]; then
   ifconfig eth0 mtu $MTU_VALUE
   echo "MTU 值已设置为 $MTU_VALUE"
 else
-  echo "无法确定最佳 MTU 值，使用默认值"
+  MTU_VALUE=1500
+  ifconfig eth0 mtu $MTU_VALUE
+  echo "无法确定最佳 MTU 值，使用默认值 $MTU_VALUE"
 fi
 
 # 确认BBR是否已启用
