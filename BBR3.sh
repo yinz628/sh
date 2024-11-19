@@ -15,8 +15,8 @@ echo "net.ipv4.tcp_tw_recycle = 1" >> $sysctl_config_file
 # 增加TCP缓冲区大小
 sed -i '/^net\.ipv4\.tcp_rmem/d' $sysctl_config_file
 sed -i '/^net\.ipv4\.tcp_wmem/d' $sysctl_config_file
-echo "net.ipv4.tcp_rmem = 4096 87380 6291456" >> $sysctl_config_file
-echo "net.ipv4.tcp_wmem = 4096 16384 4194304" >> $sysctl_config_file
+echo "net.ipv4.tcp_rmem = 4096 87380 16777216" >> $sysctl_config_file
+echo "net.ipv4.tcp_wmem = 4096 65536 16777216" >> $sysctl_config_file
 
 # 启用窗口扩大系数
 sed -i '/^net\.ipv4\.tcp_window_scaling/d' $sysctl_config_file
@@ -43,8 +43,8 @@ if ip -6 addr show | grep -q 'inet6'; then
   # 增加IPv6 TCP缓冲区大小
   sed -i '/^net\.ipv6\.tcp_rmem/d' $sysctl_config_file
   sed -i '/^net\.ipv6\.tcp_wmem/d' $sysctl_config_file
-  echo "net.ipv6.tcp_rmem = 4096 87380 6291456" >> $sysctl_config_file
-  echo "net.ipv6.tcp_wmem = 4096 16384 4194304" >> $sysctl_config_file
+  echo "net.ipv6.tcp_rmem = 4096 87380 16777216" >> $sysctl_config_file
+  echo "net.ipv6.tcp_wmem = 4096 65536 16777216" >> $sysctl_config_file
 
   # 启用IPv6窗口扩大系数
   sed -i '/^net\.ipv6\.tcp_window_scaling/d' $sysctl_config_file
