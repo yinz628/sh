@@ -22,7 +22,11 @@ net.ipv4.tcp_congestion_control = bbr
 net.core.rmem_max = 16777216
 # 调整最大发送缓冲区大小
 net.core.wmem_max = 16777216
+EOF
 
+# 检查是否有IPv6地址
+if ip -6 addr show | grep -q 'inet6'; then
+  cat <<EOF >> /etc/sysctl.conf
 # 启用IPv6转发
 net.ipv6.conf.all.forwarding = 1
 
@@ -33,6 +37,7 @@ net.ipv6.tcp_wmem = 4096 16384 4194304
 # 启用IPv6窗口扩大系数
 net.ipv6.tcp_window_scaling = 1
 EOF
+fi
 
 # 使配置生效
 sysctl -p
@@ -49,10 +54,13 @@ sysctl net.core.default_qdisc
 sysctl net.ipv4.tcp_congestion_control
 sysctl net.core.rmem_max
 sysctl net.core.wmem_max
-sysctl net.ipv6.conf.all.forwarding
-sysctl net.ipv6.tcp_rmem
-sysctl net.ipv6.tcp_wmem
-sysctl net.ipv6.tcp_window_scaling
+
+if ip -6 addr show | grep -q 'inet6'; then
+  sysctl net.ipv6.conf.all.forwarding
+  sysctl net.ipv6.tcp_rmem
+  sysctl net.ipv6.tcp_wmem
+  sysctl net.ipv6.tcp_window_scaling
+fi
 
 # 调整网络接口的MTU值 (假设 eth0 是目标接口)
 MTU_VALUE=$(ping -c 4 -M do -s 1472 specificwebsite.com | grep -oP '(?<=bytes from).*' | awk '{print $4}' | cut -d'=' -f2)
